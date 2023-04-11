@@ -1,0 +1,109 @@
+----------------------------------------------------------------------
+-- DEPENDENCIES
+----------------------------------------------------------------------
+
+local fractal = require 'main.map.chunks.fractal'
+local CC = require 'main.map.chunks.chunk-config'
+
+----------------------------------------------------------------------
+-- PROPERTIES
+----------------------------------------------------------------------
+
+local WIDTH = tonumber(sys.get_config('display.width'))
+local HEIGHT = tonumber(sys.get_config('display.height'))
+
+local OCEAN = 10
+local DEEPWATER = 9
+local WATER = 8
+local SHALLOWWATER = 7
+local SAND = 6
+local GRASS = 3
+
+----------------------------------------------------------------------
+-- FUNCTIONS
+----------------------------------------------------------------------
+
+-- function for getting tile-ids from map.tilesource
+function get_ground_id(n)
+	if n < 3 then -- 1,2
+		return OCEAN
+	elseif n < 5 then -- 3,4
+		return DEEPWATER
+	elseif n < 6 then -- 5
+		return WATER
+	elseif n < 7 then -- 6
+		return SHALLOWWATER
+	elseif n < 9 then -- 7,8
+		return SAND
+	elseif n > 8 then -- 9,10,11,12,13,14,15,16 [depending on amplitude od fractal noise]
+		return GRASS
+	end 
+end
+
+-- funktion to get tree-ids from map.tilesource
+function get_onground_id(tn, cn)
+	if ((tn > 14 or tn < 3)) and cn > 9 then
+		return math.random(47,49)
+	else
+		-- tile 50 has one black pixel with a transparency of 1 [from 255],
+		-- so it can be used as an empty tile
+		return 50
+	end
+end
+
+local function update_chunks()
+	for i = -2, 2 do
+		for j = -2, 2 do
+			local chunk = fractal.noise_chunk(CC.root_seed, CC.current_chunk.x + i, CC.current_chunk.y + j, 4, nil, 5)
+			-- remove next two comments to generate trees
+			-- local trees = fractal.noise_chunk(CC.seeds.trees, CC.current_chunk.x + i, CC.current_chunk.y + j, 1, 0.013, 4)
+			for y = 1, CC.height do
+				for x = 1, CC.width do
+					tilemap.set_tile('/chunks#'..i..'_'..j, '#0-ground', x, y, get_ground_id(chunk[x][y]))
+					-- tilemap.set_tile('/chunks#'..i..'_'..j, '#1-onground', x, y, get_onground_id(trees[x][y], chunk[x][y]))
+				end
+			end
+		end
+	end
+end
+
+function init(self)
+	msg.post('.', 'acquire_input_focus')
+	update_chunks()
+
+	self.previous_px = 0
+	self.previous_py = 0
+end
+
+function update(self, dt)
+	local player = go.get_position('player')
+	local px = player.x
+	local py = player.y
+	local previous_cx = math.floor(self.previous_px / CC.chunksize)
+	local previous_cy = math.floor(self.previous_py / CC.chunksize)
+
+	go.set_position(-vmath.vector3(px % CC.chunksize, py % CC.chunksize, 0))
+
+	-- calculate new chunk x,y and update chunks if it differs
+	-- from the previous chunk x,y
+	local cx = math.floor(px / CC.chunksize)
+	local cy = math.floor(py / CC.chunksize)
+
+	if cx ~= previous_cx or cy ~= previous_cy then
+		CC.current_chunk.x = cx
+		CC.current_chunk.y = cy
+		update_chunks()
+	end
+
+	self.previous_px = px
+	self.previous_py = py
+end
+
+function on_input(self, action_id, action)
+	-- if 'R' is pressed, a new seed is created and the world is generated again.
+	if action_id == hash('reload') and action.pressed then
+		CC.root_seed = os.clock() * 100000000000
+		CC.seeds.tree = CC.root_seed + 12345
+		update_chunks()
+	end
+end

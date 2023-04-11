@@ -1,0 +1,40 @@
+key_trigger {
+  input: KEY_W
+  action: "move_up"
+}
+key_trigger {
+  input: KEY_A
+  action: "move_left"
+}
+key_trigger {
+  input: KEY_S
+  action: "move_down"
+}
+key_trigger {
+  input: KEY_D
+  action: "move_right"
+}
+key_trigger {
+  input: KEY_R
+  action: "reload"
+}
+key_trigger {
+  input: KEY_DOWN
+  action: "cam_down"
+}
+key_trigger {
+  input: KEY_UP
+  action: "cam_up"
+}
+key_trigger {
+  input: KEY_LSHIFT
+  action: "sprint"
+}
+mouse_trigger {
+  input: MOUSE_BUTTON_LEFT
+  action: "lmb"
+}
+mouse_trigger {
+  input: MOUSE_BUTTON_RIGHT
+  action: "rmb"
+}
