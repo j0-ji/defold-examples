@@ -21,16 +21,16 @@ local INVENTORY = hash('inventory')
 -- FUNCTIONS
 ----------------------------------------------------------------------
 
-function move(sprint_mod)
+function move(self, dt, sprint_mod)
 	if self.actions[MOVE_LEFT] then
-		pos.x = pos.x - self.speed * (sprint_mod or 1) * dt
+		self.pos.x = self.pos.x - self.speed * (sprint_mod or 1) * dt
 	elseif self.actions[MOVE_RIGHT] then
-		pos.x = pos.x + self.speed * (sprint_mod or 1) * dt
+		self.pos.x = self.pos.x + self.speed * (sprint_mod or 1) * dt
 	end
 	if self.actions[MOVE_UP] then
-		pos.y = pos.y + self.speed * (sprint_mod or 1) * dt
+		self.pos.y = self.pos.y + self.speed * (sprint_mod or 1) * dt
 	elseif self.actions[MOVE_DOWN] then
-		pos.y = pos.y - self.speed * (sprint_mod or 1) * dt
+		self.pos.y = self.pos.y - self.speed * (sprint_mod or 1) * dt
 	end
 end
 
@@ -43,18 +43,18 @@ end
 
 
 function update(self, dt)
-	local pos = go.get_position()
+	self.pos = go.get_position()
 	
 	if self.actions[SPRINT] then
-		move(1.5)
+		move(self, dt, 1.5)
 	else
-		move(s)
+		move(self, dt)
 	end
 
-	go.set_position(pos)
-	go.set_position(-vmath.vector3(pos.x, pos.y, 0) + vmath.vector3(512, 512, 0), "objects")
+	go.set_position(self.pos)
+	go.set_position(-vmath.vector3(self.pos.x, self.pos.y, 0) + vmath.vector3(512, 512, 0), "objects")
 	-- outputs player-coordinates (in tiles, not pixels)
-	msg.post('@render:', 'draw_text', { position = vmath.vector3(20,20,0), text = ('PLAYER x:%d, y:%d'):format(pos.x/16, pos.y/16) })
+	msg.post('@render:', 'draw_text', { position = vmath.vector3(20,20,0), text = ('PLAYER x:%d, y:%d'):format(self.pos.x/16, self.pos.y/16) })
 end
 
 function on_message(self, message_id, message, sender)
